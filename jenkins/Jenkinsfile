@@ -6,7 +6,6 @@ pipeline {
         DOCKERHUB_USERNAME = "pandu321"
         EC2_USER = "ubuntu"
         EC2_IP = "13.60.76.230"
-        SSH_KEY = credentials('jenkins-ssh-key') // private key (PEM format)
     }
 
     stages {
@@ -37,10 +36,12 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                sh """
-                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_USER}@${EC2_IP} \\
-                    'docker service update --image ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest yii2_service'
-                """
+                withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_FILE" ${EC2_USER}@${EC2_IP} \\
+                        'docker service update --image ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest yii2_service'
+                    """
+                }
             }
         }
     }
