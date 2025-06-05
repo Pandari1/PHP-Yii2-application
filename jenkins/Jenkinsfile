@@ -39,23 +39,23 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
+                sshagent(['jenkins-ssh-key']) {
                     script {
-                        def checkService = sh (
-                            script: "ssh -o StrictHostKeyChecking=no -i $SSH_KEY_FILE ${EC2_USER}@${EC2_IP} docker service ls --filter name=${SERVICE_NAME} -q",
+                        def checkService = sh(
+                            script: "ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} docker service ls --filter name=${SERVICE_NAME} -q",
                             returnStdout: true
                         ).trim()
 
                         if (checkService) {
-                            echo "Service exists, updating image only..."
+                            echo "Service exists, updating image..."
                             sh """
-                                ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_FILE" ${EC2_USER}@${EC2_IP} \\
+                                ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} \\
                                 "sudo docker service update --image ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest ${SERVICE_NAME}"
                             """
                         } else {
                             echo "Service does not exist, creating with port published..."
                             sh """
-                                ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_FILE" ${EC2_USER}@${EC2_IP} \\
+                                ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} \\
                                 "sudo docker service create --name ${SERVICE_NAME} --publish ${HOST_PORT}:${CONTAINER_PORT} ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest"
                             """
                         }
