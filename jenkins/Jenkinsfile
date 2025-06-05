@@ -1,9 +1,11 @@
 pipeline {
     agent any
     environment {
-        DOCKER_IMAGE = "your_dockerhub_username/yii2app:${env.BUILD_NUMBER}"
+        DOCKER_IMAGE = "pandu321/yii2app"
+        DOCKERHUB_USERNAME = "pandu321"
+        DOCKERHUB_PASS = "Kalyan@1221"
         EC2_USER = "ubuntu"
-        EC2_IP = "your_ec2_public_ip"
+        EC2_IP = "13.60.76.230"
         SSH_KEY = credentials('jenkins-ssh-key')
     }
     stages {
@@ -20,6 +22,18 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 sh "docker push ${DOCKER_IMAGE}"
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    // Push the Docker image to DockerHub
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASS')]) {
+                        sh "echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USERNAME --password-stdin"
+                        sh "docker push ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest"
+                    }
+                }
             }
         }
         stage('Deploy to EC2') {
