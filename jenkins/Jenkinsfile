@@ -1,46 +1,45 @@
 pipeline {
     agent any
+
     environment {
-        DOCKER_IMAGE = "pandu321/yii2app"
+        DOCKER_IMAGE = "yii2app"
         DOCKERHUB_USERNAME = "pandu321"
-        DOCKERHUB_PASS = "Kalyan@1221"
         EC2_USER = "ubuntu"
         EC2_IP = "13.60.76.230"
-        SSH_KEY = credentials('jenkins-ssh-key')
+        SSH_KEY = credentials('jenkins-ssh-key') // private key (PEM format)
     }
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
+
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${DOCKER_IMAGE} ./app"
-            }
-        }
-        stage('Push Docker Image') {
-            steps {
-                sh "docker push ${DOCKER_IMAGE}"
+                sh "docker build -t ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest ./app"
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Login & Push Docker Image') {
             steps {
                 script {
-                    // Push the Docker image to DockerHub
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASS')]) {
-                        sh "echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USERNAME --password-stdin"
-                        sh "docker push ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest"
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                            docker push ${DOCKER_USER}/${DOCKER_IMAGE}:latest
+                        """
                     }
                 }
             }
         }
+
         stage('Deploy to EC2') {
             steps {
                 sh """
-                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_USER}@${EC2_IP} \\
-                'docker service update --image ${DOCKER_IMAGE} yii2_service'
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_USER}@${EC2_IP} \\
+                    'docker service update --image ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest yii2_service'
                 """
             }
         }
