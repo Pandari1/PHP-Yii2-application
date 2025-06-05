@@ -18,20 +18,23 @@ COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy only composer files first (for caching)
+# Copy composer.json only (for dependency installation and cache)
 COPY composer.json ./
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Configure Composer to use Asset Packagist instead of fxp plugin
+RUN composer config repositories.assetpackagist composer https://asset-packagist.org
 
-# Copy the rest of the application
+# Install dependencies without dev packages
+RUN composer install --no-dev --prefer-dist --optimize-autoloader
+
+# Copy rest of the application source code
 COPY . .
 
-# Set permissions (optional)
+# Set proper permissions
 RUN chown -R www-data:www-data /var/www/html
 
-# Expose the new port
+# Expose application port
 EXPOSE 9090
 
-# Start Yii2 application using PHP's built-in server
+# Start the Yii2 app with PHP's built-in server
 CMD ["php", "-S", "0.0.0.0:9090", "-t", "web"]
