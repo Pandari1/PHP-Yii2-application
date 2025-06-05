@@ -39,7 +39,7 @@ pipeline {
                 withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
                     sh """
                         ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_FILE" ${EC2_USER}@${EC2_IP} \\
-                        'docker service update --image ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest yii2_service'
+                        'sudo docker service update --image ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest yii2_service'
                     """
                 }
             }
