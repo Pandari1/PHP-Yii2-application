@@ -35,4 +35,4 @@ User Browser --> HTTP (Port 80) --> NGINX (Reverse Proxy) --> Yii2 App Container
 
 ## 🌐 Access
 
-- **Application**: `http://http://13.60.76.230/
+- **Application**: http://13.60.76.230/
