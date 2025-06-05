@@ -6,6 +6,9 @@ pipeline {
         DOCKERHUB_USERNAME = "pandu321"
         EC2_USER = "ubuntu"
         EC2_IP = "13.60.76.230"
+        SERVICE_NAME = "yii2_service"
+        HOST_PORT = "8080"
+        CONTAINER_PORT = "9090"
     }
 
     stages {
@@ -37,10 +40,27 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_FILE" ${EC2_USER}@${EC2_IP} \\
-                        'sudo docker service update --image ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest yii2_service'
-                    """
+                    script {
+                        // First, check if service exists
+                        def checkService = sh (
+                            script: "ssh -o StrictHostKeyChecking=no -i $SSH_KEY_FILE ${EC2_USER}@${EC2_IP} docker service ls --filter name=${SERVICE_NAME} -q",
+                            returnStdout: true
+                        ).trim()
+
+                        if (checkService) {
+                            // Service exists: update image and port mapping
+                            sh """
+                                ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_FILE" ${EC2_USER}@${EC2_IP} \\
+                                "sudo docker service update --image ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest --publish-rm ${HOST_PORT} --publish-add ${HOST_PORT}:${CONTAINER_PORT} ${SERVICE_NAME}"
+                            """
+                        } else {
+                            // Service does not exist: create it with port published
+                            sh """
+                                ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_FILE" ${EC2_USER}@${EC2_IP} \\
+                                "sudo docker service create --name ${SERVICE_NAME} --publish ${HOST_PORT}:${CONTAINER_PORT} ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest"
+                            """
+                        }
+                    }
                 }
             }
         }
