@@ -29,8 +29,8 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh """
-                            echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
-                            docker push ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest
+                            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                            docker push ${DOCKER_USER}/${DOCKER_IMAGE}:latest
                         """
                     }
                 }
@@ -41,19 +41,19 @@ pipeline {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
                     script {
-                        def checkService = sh(
-                            script: "ssh -o StrictHostKeyChecking=no -i \"$SSH_KEY_FILE\" ${EC2_USER}@${EC2_IP} docker service ls --filter name=${SERVICE_NAME} -q",
+                        def checkService = sh (
+                            script: "ssh -o StrictHostKeyChecking=no -i $SSH_KEY_FILE ${EC2_USER}@${EC2_IP} docker service ls --filter name=${SERVICE_NAME} -q",
                             returnStdout: true
                         ).trim()
 
                         if (checkService) {
-                            echo "Service exists, updating..."
+                            echo "Service exists, updating image only..."
                             sh """
                                 ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_FILE" ${EC2_USER}@${EC2_IP} \\
-                                "sudo docker service update --image ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest --publish-rm ${HOST_PORT} --publish-add ${HOST_PORT}:${CONTAINER_PORT} ${SERVICE_NAME}"
+                                "sudo docker service update --image ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest ${SERVICE_NAME}"
                             """
                         } else {
-                            echo "Service does not exist, creating..."
+                            echo "Service does not exist, creating with port published..."
                             sh """
                                 ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_FILE" ${EC2_USER}@${EC2_IP} \\
                                 "sudo docker service create --name ${SERVICE_NAME} --publish ${HOST_PORT}:${CONTAINER_PORT} ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}:latest"
