@@ -1,4 +1,3 @@
-'''json
 {
   "name": "sample/yii2app",
   "description": "Minimal Yii2 application for Docker Swarm deployment",
@@ -13,4 +12,3 @@
     }
   }
 }
-'''
