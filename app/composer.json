@@ -4,11 +4,30 @@
   "require": {
     "yiisoft/yii2": "~2.0.15",
     "yiisoft/yii2-bootstrap": "~2.0.0",
-    "yiisoft/yii2-swiftmailer": "~2.0.0"
+    "yiisoft/yii2-swiftmailer": "~2.0.0",
+    "bower-asset/jquery": "^3.6",
+    "bower-asset/bootstrap": "^3.4"
   },
   "autoload": {
     "psr-4": {
       "app\\": "src/"
     }
-  }
+  },
+  "config": {
+    "process-timeout": 1800,
+    "fxp-asset": {
+      "enabled": true
+    },
+    "allow-plugins": {
+      "fxp/composer-asset-plugin": true
+    }
+  },
+  "extra": {
+    "asset-installer-paths": {
+      "bower-asset-library": "vendor/bower-asset",
+      "npm-asset-library": "vendor/npm-asset"
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }
