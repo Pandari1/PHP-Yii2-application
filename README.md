@@ -1,11 +1,23 @@
-# PHP-Yii2-application
-
+# 🚀 Yii2 Application Deployment with Docker Swarm, NGINX, and Terraform on AWS
 Overview
 This project demonstrates deployment of a Yii2 PHP web application using Docker Swarm on an AWS EC2 instance, with Jenkins CI/CD pipeline and Docker Hub for container image registry. NGINX is configured as a reverse proxy on the EC2 instance to forward HTTP traffic to the Yii2 container.
 
-# 🚀 Yii2 Application Deployment with Docker Swarm, NGINX, and Terraform on AWS
+Architecture
++------------------+        +-------------------+       +---------------------+
+| Developer        |  --->  | Jenkins CI/CD     |  ---> | Docker Hub Registry  |
++------------------+        +-------------------+       +---------------------+
+                                                           |
+                                                           v
+                                             +-------------------------------+
+                                             | AWS EC2 (Docker Swarm Node)    |
+                                             | +---------------------------+ |
+                                             | | Docker Swarm               | |
+                                             | | - yii2_service container  | |
+                                             | | NGINX Reverse Proxy       | |
+                                             | +---------------------------+ |
+                                             +-------------------------------+
 
-This project demonstrates a minimal Yii2 PHP application deployed using Docker Swarm and NGINX as a reverse proxy on an AWS EC2 instance. Jenkins is used for CI/CD and Terraform provisions the infrastructure.
+User Browser --> HTTP (Port 80) --> NGINX (Reverse Proxy) --> Yii2 App Container (Port 9090)
 
 ---
 ## 📦 Stack Components
